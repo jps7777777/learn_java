@@ -17,7 +17,7 @@ public class ImageServiceImpl implements ImageService {
     private PictureDOMapper pictureDOMapper;
 
     @Override
-    public int saveImageInfo(PictureModel pictureModel) throws FinallyException {
+    public PictureModel saveImageInfo(PictureModel pictureModel) throws FinallyException {
         if(pictureModel == null){
             throw new FinallyException(EnumException.DATA_ERROR.setErrMsg("图片信息不存在"));
         }
@@ -26,7 +26,7 @@ public class ImageServiceImpl implements ImageService {
         if(pid == 0){
             throw new FinallyException(EnumException.DATABASE_ERROR.setErrMsg("图片保存失败"));
         }
-        return pid;
+        return convertByDO(pictureDO);
     }
 
     @Override

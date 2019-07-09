@@ -1,82 +1,131 @@
 package image.action;
 
 
+import image.service.ImageService;
+import image.service.model.PictureModel;
+import image.util.CommonException;
 import image.util.CommonResponse;
 import image.util.EnumException;
 import image.util.FinallyException;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Controller("image")
 @RequestMapping("/image")
-@CrossOrigin(allowedHeaders = "*",allowCredentials = "true")
+@CrossOrigin(allowedHeaders = "*", allowCredentials = "true")
 public class ImageAction {
 
     @Value("${max_image_size}")
-    private long max_image_size ;
+    private long max_image_size;
+    @Value("${upload_image_dir}")
+    private String image_dir;
+
+    @Autowired
+    private ImageService imageService;
 
     @Autowired
     private RedisTemplate redisTemplate;
 
+    //设置token登录异常及销毁
+//    public void destoryToken(){
+//        stringRedisTemplate.opsForValue().set("test", "100",60*10,TimeUnit.SECONDS);//向redis里存入数据和设置缓存时间
+//        redisTemplate.opsForValue().set("time_out","60秒销毁",60, TimeUnit.SECONDS);
+//    }
+
+
     /**
      * 图片保存在本地服务器
      * 使用一般MySQL存储数据。
+     *
      * @return
      */
-    @RequestMapping("/upload")
+    @RequestMapping(value = "/upload",params = {"token"})
     @ResponseBody
-    public CommonResponse uploadImage(MultipartFile file, HttpServletRequest request) throws FinallyException {
-        String token = request.getParameter("token");
-        String info = (String) redisTemplate.opsForValue().get(token);
-        if(info == null || info == ""){
+    public CommonResponse uploadImage(MultipartFile file,String token, HttpServletRequest request) throws FinallyException {
+        if (token == null || token.equals("")) {
             throw new FinallyException(EnumException.USER_NOT_LOGIN);
         }
-        if(request.getParameter("token") == null){
+        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
+
+        if (user == null) {
+            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("请重新登录"));
+        }
+        if (user.containsKey("otherLogin")) {
+            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("帐号在其他端口登录"));
         }
         // 文件检测
-        if(file.isEmpty()){
+        if (file == null) {
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("请选择图片"));
         }
         // 文件大小不大于5M，单位为字节单位：B
-        if(file.getSize() > max_image_size){
-
+        if (file.getSize() > max_image_size) {
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片大于5M"));
         }
         // 上传文件
-        String fileName = file.getOriginalFilename();
-        String suffixName = fileName.substring(fileName.lastIndexOf("."));
+        String originalFilename = file.getOriginalFilename();
+        String suffixName = originalFilename.substring(originalFilename.lastIndexOf("."));
         // 文件上传后路径
-        fileName = UUID.randomUUID() + suffixName;
-        String filePath = "D:\\work\\";
-        File dest = new File(filePath + fileName);
+        String fileName = UUID.randomUUID() + suffixName;
+        File dest = new File(this.image_dir + fileName);
         try {
-                file.transferTo(dest);
+            file.transferTo(dest);
             InetAddress address = InetAddress.getLocalHost();
-            String htp_url =  "http://"+address.getHostAddress()+"/";
-
-
+            String htp_url = "http://" + address.getHostAddress() + "/image/"+fileName;
+            PictureModel pictureModel = new PictureModel();
+            pictureModel.setCategory(1);
+            pictureModel.setPath(this.image_dir+fileName);
+            pictureModel.setUrl(htp_url);
+            pictureModel.setKeywords("喵喵");
+            PictureModel resModel = imageService.saveImageInfo(pictureModel);
+            return CommonResponse.create(convertToVO(resModel));
         } catch (IOException e) {
-//            e.printStackTrace();
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片保存失败"));
         }
-
-
-
-        return CommonResponse.create("");
     }
 
 
-
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public Object handlerException(HttpServletRequest request, Exception ex){
+        Map<String,Object> responseData = new HashMap<>();
+        // 如果是程序定义的错误，做吸收处理
+        if(ex instanceof CommonException){
+            CommonException commonException = (CommonException) ex;
+            responseData.put("errMsg",commonException.getErrMsg());
+            responseData.put("errCode",commonException.getErrCode());
+        }else {
+            if(ex instanceof org.springframework.web.bind.MissingServletRequestParameterException){
+                responseData.put("errCode", EnumException.PARAMS_ERROR.getErrCode());
+                responseData.put("errMsg",ex.getMessage());// 开发阶段使用
+            }else{
+//                responseData.put("errCode", EnumException.SERVER_ERROR.getErrCode());
+//                responseData.put("errMsg",EnumException.SERVER_ERROR.getErrMsg());// 正式使用
+                responseData.put("errCode", 19201);
+                responseData.put("errLine",ex.getLocalizedMessage());
+                responseData.put("errMsgClass",ex.getClass());// 开发阶段使用
+                responseData.put("errMsg",ex.getMessage());// 开发阶段使用
+            }
+            // TODO 系统添加错误信息
+        }
+        return CommonResponse.create(responseData,"failure");
+    }
 
 //    implements ApplicationListener<WebServerInitializedEvent>
 //    private Map<String,String> callbackInfo = new HashMap<>();
@@ -240,5 +289,14 @@ public class ImageAction {
 //        this.serverPort = webServerInitializedEvent.getWebServer().getPort();
 //    }
 
+
+    public ImageVO convertToVO(PictureModel pictureModel){
+        if(pictureModel == null){
+            return null;
+        }
+        ImageVO imageVO = new ImageVO();
+        BeanUtils.copyProperties(pictureModel,imageVO);
+        return imageVO;
+    }
 
 }
