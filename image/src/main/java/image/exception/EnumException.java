@@ -1,4 +1,4 @@
-package image.util;
+package image.exception;
 
 public enum EnumException implements CommonException{
 

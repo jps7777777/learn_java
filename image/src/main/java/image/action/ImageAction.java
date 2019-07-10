@@ -3,14 +3,13 @@ package image.action;
 
 import image.service.ImageService;
 import image.service.model.PictureModel;
-import image.util.CommonException;
-import image.util.CommonResponse;
-import image.util.EnumException;
-import image.util.FinallyException;
+import image.exception.CommonException;
+import image.exception.CommonResponse;
+import image.exception.EnumException;
+import image.exception.FinallyException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -19,17 +18,22 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Controller("image")
 @RequestMapping("/image")
 @CrossOrigin(allowedHeaders = "*", allowCredentials = "true")
-public class ImageAction {
+public class ImageAction extends BaseAction{
 
     @Value("${max_image_size}")
     private long max_image_size;
@@ -100,32 +104,50 @@ public class ImageAction {
     }
 
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public Object handlerException(HttpServletRequest request, Exception ex){
-        Map<String,Object> responseData = new HashMap<>();
-        // 如果是程序定义的错误，做吸收处理
-        if(ex instanceof CommonException){
-            CommonException commonException = (CommonException) ex;
-            responseData.put("errMsg",commonException.getErrMsg());
-            responseData.put("errCode",commonException.getErrCode());
-        }else {
-            if(ex instanceof org.springframework.web.bind.MissingServletRequestParameterException){
-                responseData.put("errCode", EnumException.PARAMS_ERROR.getErrCode());
-                responseData.put("errMsg",ex.getMessage());// 开发阶段使用
-            }else{
-//                responseData.put("errCode", EnumException.SERVER_ERROR.getErrCode());
-//                responseData.put("errMsg",EnumException.SERVER_ERROR.getErrMsg());// 正式使用
-                responseData.put("errCode", 19201);
-                responseData.put("errLine",ex.getLocalizedMessage());
-                responseData.put("errMsgClass",ex.getClass());// 开发阶段使用
-                responseData.put("errMsg",ex.getMessage());// 开发阶段使用
-            }
-            // TODO 系统添加错误信息
+    /**
+     * 提取上传方法为公共方法
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    private String executeUpload(MultipartFile file)throws Exception{
+        //文件后缀名
+        String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        //上传文件名
+        String fileName = UUID.randomUUID()+suffix;
+        //服务端保存的文件对象
+        File serverFile = new File(image_dir + fileName);
+        // 检测是否存在目录
+        if (!serverFile.getParentFile().exists()) {
+            serverFile.getParentFile().mkdirs();
         }
-        return CommonResponse.create(responseData,"failure");
+        //将上传的文件写入到服务器端文件内
+        file.transferTo(serverFile);
+        return fileName;
     }
+
+
+
+
+
+    /**
+     * 图片保存在本地服务器
+     * 使用一般MySQL存储数据。
+     *
+     * @return
+     */
+//    @RequestMapping(value = "/uploads",params = {"token"})
+//    @ResponseBody
+//    public CommonResponse uploadImages(List<MultipartFile> file, String token, HttpServletRequest request) throws FinallyException {
+//        if (token == null || token.equals("")) {
+//            throw new FinallyException(EnumException.USER_NOT_LOGIN);
+//        }
+//        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
+//
+//    }
+
+
+
 
 //    implements ApplicationListener<WebServerInitializedEvent>
 //    private Map<String,String> callbackInfo = new HashMap<>();
@@ -142,7 +164,6 @@ public class ImageAction {
 //    @RequestMapping("/upload")
 //    @ResponseBody
 //    public Map savePic(MultipartFile file, HttpServletRequest request) {
-//
 //        if(request.getParameter("token") == null){
 //            callbackInfo.put("message","用户不存在");
 //            callbackInfo.put("status","failure");

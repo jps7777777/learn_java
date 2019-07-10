@@ -1,7 +1,7 @@
 package image.service;
 
 import image.service.model.PictureModel;
-import image.util.FinallyException;
+import image.exception.FinallyException;
 
 public interface ImageService {
 
