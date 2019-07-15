@@ -17,9 +17,6 @@ import java.util.Map;
 
 public class BaseAction {
 
-    @Autowired
-    private RedisTemplate redisTemplate;
-
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
@@ -46,20 +43,6 @@ public class BaseAction {
         }
         return CommonResponse.create(responseData,"failure");
     }
-
-
-    /**
-     *
-     * @param token token
-     * @return 返回内容
-     * @throws FinallyException 返回错误内容
-     */
-    protected String checkLogin(String token) throws FinallyException {
-
-
-        return "";
-    }
-
 
 
 

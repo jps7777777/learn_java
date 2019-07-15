@@ -18,7 +18,7 @@ public class TikaCheck {
         String[] temp = multipartFiles[i].getOriginalFilename().split("\\.");
         // 获取文件现用格式
         String fileType = temp[temp.length - 1];
-        if ("doc".equals(fileType)) {
+        if ("TechDoc".equals(fileType)) {
             // 正常doc:application/x-tika-msoffice ，正常txt:text/plain
             if (!"application/x-tika-msoffice".equals(tika.detect(multipartFiles[i].getInputStream()))) {
                 // 对损坏文件标识

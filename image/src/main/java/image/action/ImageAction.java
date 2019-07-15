@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,14 +58,8 @@ public class ImageAction extends BaseAction{
         if (token == null || token.equals("")) {
             throw new FinallyException(EnumException.USER_NOT_LOGIN);
         }
-        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
+        Map<String,Object> user = checkLogin(token);
 
-        if (user == null) {
-            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("请重新登录"));
-        }
-        if (user.containsKey("otherLogin")) {
-            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("帐号在其他端口登录"));
-        }
         // 文件检测
         if (file == null) {
             throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("请选择图片"));
@@ -95,6 +90,76 @@ public class ImageAction extends BaseAction{
         }
     }
 
+    @RequestMapping(value = "/uploads",params = {"token"})
+    @ResponseBody()
+    public CommonResponse uploadImages(MultipartFile files,String token,HttpServletRequest request) throws FinallyException {
+        System.out.println(token);
+        if (token == null || token.equals("")) {
+            throw new FinallyException(EnumException.USER_NOT_LOGIN);
+        }
+        Map<String,Object> user = checkLogin(token);
+//        if(files.length < 1){
+//            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片上传错误"));
+//        }
+        // 上传文件
+        String originalFilename = files.getOriginalFilename();
+        System.out.println("file name = "+originalFilename);
+        String suffixName = originalFilename.substring(originalFilename.lastIndexOf("."));
+        System.out.println("suffixName name = "+suffixName);
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            DigestInputStream digestInputStream = new DigestInputStream(files.getInputStream(), md5);
+            // read的过程中进行MD5处理，直到读完文件
+            byte[] buffer = new byte[256*1024];
+            while (digestInputStream.read(buffer) > 0){}
+            // 获取最终的MessageDigest
+            md5 = digestInputStream.getMessageDigest();
+            // 拿到结果，也是字节数组，包含16个元素
+            byte[] resultByteArray = md5.digest();
+            // 同样，把字节数组转换成字符串
+            String value = byteArrayToHex(resultByteArray);
+            System.out.println(value);
+            digestInputStream.close();
+            return CommonResponse.create(value);
+        } catch (Exception e) {
+//            e.printStackTrace();
+            throw new FinallyException(EnumException.DATA_ERROR.setErrMsg("error ="+e.getMessage()));
+        }
+    }
+    public static String byteArrayToHex(byte[] byteArray) {
+        // 首先初始化一个字符数组，用来存放每个16进制字符
+        char[] hexDigits = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+        // new一个字符数组，这个就是用来组成结果字符串的（解释一下：一个byte是八位二进制，也就是2位十六进制字符（2的8次方等于16的2次方））
+        char[] resultCharArray =new char[byteArray.length * 2];
+        // 遍历字节数组，通过位运算（位运算效率高），转换成字符放到字符数组中去
+        int index = 0;
+        for (byte b : byteArray) {
+            resultCharArray[index++] = hexDigits[b>>> 4 & 0xf];
+            resultCharArray[index++] = hexDigits[b& 0xf];
+        }
+        // 字符数组组合成字符串返回
+        return new String(resultCharArray);
+    }
+    /**
+     * 检测登录状态
+     * @param token token
+     * @return 返回内容
+     * @throws FinallyException 返回错误内容
+     */
+    private Map<String,Object> checkLogin(String token) throws FinallyException {
+        if (token == null || token.equals("")) {
+            throw new FinallyException(EnumException.USER_NOT_LOGIN);
+        }
+        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
+        System.out.println("userId = "+user.get("userId"));
+        if (user == null) {
+            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("请重新登录"));
+        }
+        if (user.containsKey("otherLogin")) {
+            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("帐号在其他端口登录"));
+        }
+        return user;
+    }
 
     /**
      * 提取上传方法为公共方法
@@ -103,6 +168,9 @@ public class ImageAction extends BaseAction{
      * @throws Exception 返回结果
      */
     private String executeUpload(MultipartFile file)throws Exception{
+
+
+
         //文件后缀名
         String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
         //上传文件名
