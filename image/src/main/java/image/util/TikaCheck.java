@@ -1,9 +1,14 @@
 package image.util;
 
+import org.apache.tika.Tika;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
 public class TikaCheck {
 
 
-    private String checkFile() {
+    private String checkFile(MultipartFile[] multipartFiles,int i) throws IOException {
         Tika tika = new Tika();
         // 标识损坏文件数
         int n = 0;

@@ -11,6 +11,12 @@ public class ImageActionTest {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    //设置token登录异常及销毁
+//    public void destoryToken(){
+//        stringRedisTemplate.opsForValue().set("test", "100",60*10,TimeUnit.SECONDS);//向redis里存入数据和设置缓存时间
+//        redisTemplate.opsForValue().set("time_out","60秒销毁",60, TimeUnit.SECONDS);
+//    }
+
     @Test
     public void uploadImage() {
 

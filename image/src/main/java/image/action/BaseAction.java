@@ -48,19 +48,16 @@ public class BaseAction {
     }
 
 
+    /**
+     *
+     * @param token token
+     * @return 返回内容
+     * @throws FinallyException 返回错误内容
+     */
     protected String checkLogin(String token) throws FinallyException {
-        if (token == null || token.equals("")) {
-            throw new FinallyException(EnumException.USER_NOT_LOGIN);
-        }
-        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
-        if (user == null) {
-            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("请重新登录"));
-        }
-        if (user.containsKey("otherLogin")) {
-            throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("帐号在其他端口登录"));
-        }
 
 
+        return "";
     }
 
 

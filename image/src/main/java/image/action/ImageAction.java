@@ -46,18 +46,10 @@ public class ImageAction extends BaseAction{
     @Autowired
     private RedisTemplate redisTemplate;
 
-    //设置token登录异常及销毁
-//    public void destoryToken(){
-//        stringRedisTemplate.opsForValue().set("test", "100",60*10,TimeUnit.SECONDS);//向redis里存入数据和设置缓存时间
-//        redisTemplate.opsForValue().set("time_out","60秒销毁",60, TimeUnit.SECONDS);
-//    }
-
-
     /**
      * 图片保存在本地服务器
      * 使用一般MySQL存储数据。
-     *
-     * @return
+     * @return 返回结果
      */
     @RequestMapping(value = "/upload",params = {"token"})
     @ResponseBody
@@ -106,9 +98,9 @@ public class ImageAction extends BaseAction{
 
     /**
      * 提取上传方法为公共方法
-     * @param file
-     * @return
-     * @throws Exception
+     * @param file 参数
+     * @return 返回结果
+     * @throws Exception 返回结果
      */
     private String executeUpload(MultipartFile file)throws Exception{
         //文件后缀名
@@ -125,6 +117,13 @@ public class ImageAction extends BaseAction{
         file.transferTo(serverFile);
         return fileName;
     }
+
+
+
+
+
+
+
 
 
 

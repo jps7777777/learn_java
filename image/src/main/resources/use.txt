@@ -1,0 +1,35 @@
+    使用Redis验证登录。
+使用接口：
+    1、一般图片上传
+       1) 使用MultipartFile上传文件
+       2) md5检测文件存在
+       3) 保存绝对目录
+       4) /image/upload => ImageAction->uploadImage
+       5)
+
+    2、多图片上传
+           1) 使用MultipartFile[]上传文件
+           2) md5检测文件存在
+           3) 保存绝对目录
+           4)
+           5)
+
+    3、
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

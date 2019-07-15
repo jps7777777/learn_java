@@ -8,7 +8,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static sun.security.krb5.internal.crypto.dk.DkCrypto.bytesToString;
 
 public class EncodingUtil {
 
