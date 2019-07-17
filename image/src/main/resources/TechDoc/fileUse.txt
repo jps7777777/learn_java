@@ -7,6 +7,64 @@
        4) /image/upload => ImageAction->uploadImage
        5)
 
+        /**
+         *  MultipartFile保存文件一般方式
+         * 1、修改文件名及后缀
+         *      fileName = UUID.randomUUID();
+         *      suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+         *
+         * 2、文件保存
+         *      a、新建保存对象，添加保存地址
+         *          File saveFile = new File(image_dir+fileName+suffix);
+         *      b、验证保存对象的地址路径可用
+         *         if(!saveFile.getParentFile().exists()){
+         *             saveFile.getParentFile().mkdirs();
+         *         }
+         *      b、保存文件
+         *         file.transferTo(saveFile);
+         *
+         */
+
+        /**
+         *  MultipartFile保存文件并添加验证信息
+         *  1、获取文件的md5值
+         *      a、使用Java的md5验证
+         *          MessageDigest md5 = MessageDigest.getInstance("MD5");
+         *          DigestInputStream digestInputStream = new DigestInputStream(files.getInputStream(), md5);
+         *      b、read的过程中进行MD5处理，直到读完文件
+         *          byte[] buffer = new byte[256*1024];
+         *          while (digestInputStream.read(buffer) > 0){}
+         *      c、获取最终的MessageDigest
+         *          md5 = digestInputStream.getMessageDigest();
+         *      d、拿到结果，也是字节数组，包含16个元素
+         *       byte[] resultByteArray = md5.digest();
+         *      e、同样，把字节数组转换成字符串
+         *       String value = byteArrayToHex(resultByteArray);
+         *
+         *  2、使用md5值到MySQL中查询，看是否存储数据
+         *      a、验证文件存在就直接返回该文件的内容
+         *          PictureModel pictureModel = imageService.checkImageSaved(value);
+         *          if(pictureModel != null){return CommonResponse.create(convertToVO(pictureModel));}
+         *      b、如果文件不存在,往下执行
+         *
+         *
+         *  3、修改文件名及后缀
+         *      fileName = UUID.randomUUID();
+         *      suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+         *
+         *  4、文件保存
+         *      a、新建保存对象，添加保存地址
+         *          File saveFile = new File(image_dir+fileName+suffix);
+         *      b、验证保存对象的地址路径可用
+         *         if(!saveFile.getParentFile().exists()){
+         *             saveFile.getParentFile().mkdirs();
+         *         }
+         *      b、保存文件
+         *         file.transferTo(saveFile);
+         *
+         */
+
+
     2、多图片上传
            1) 使用MultipartFile[]上传文件
            2) md5检测文件存在

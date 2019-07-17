@@ -42,12 +42,18 @@ public class ImageServiceImpl implements ImageService {
     }
 
     private PictureDO convertByModel(PictureModel pictureModel){
+        if(pictureModel == null){
+            return null;
+        }
         PictureDO pictureDO = new PictureDO();
         BeanUtils.copyProperties(pictureModel,pictureDO);
         return pictureDO;
     }
 
     private PictureModel convertByDO(PictureDO pictureDO){
+        if(pictureDO == null){
+            return null;
+        }
         PictureModel pictureModel = new PictureModel();
         BeanUtils.copyProperties(pictureDO,pictureModel);
         return pictureModel;

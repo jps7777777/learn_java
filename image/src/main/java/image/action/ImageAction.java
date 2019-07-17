@@ -1,6 +1,7 @@
 package image.action;
 
 
+import com.alibaba.druid.util.StringUtils;
 import image.service.ImageService;
 import image.service.model.PictureModel;
 import image.exception.CommonException;
@@ -27,19 +28,20 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 @Controller("image")
 @RequestMapping("/image")
 @CrossOrigin(allowedHeaders = "*", allowCredentials = "true")
-public class ImageAction extends BaseAction{
+public class ImageAction extends BaseAction {
 
     @Value("${max_image_size}")
     private long max_image_size;
     @Value("${upload_image_dir}")
     private String image_dir;
+    @Value("${image_regex}")
+    private String image_regex;
 
     @Autowired
     private ImageService imageService;
@@ -50,108 +52,133 @@ public class ImageAction extends BaseAction{
     /**
      * 图片保存在本地服务器
      * 使用一般MySQL存储数据。
+     *
      * @return 返回结果
      */
-    @RequestMapping(value = "/upload",params = {"token"})
+    @RequestMapping(value = "/upload", params = {"token"})
     @ResponseBody
-    public CommonResponse uploadImage(MultipartFile file,String token, HttpServletRequest request) throws FinallyException {
+    public CommonResponse uploadImage(MultipartFile file, String token, HttpServletRequest request) throws FinallyException {
         if (token == null || token.equals("")) {
             throw new FinallyException(EnumException.USER_NOT_LOGIN);
         }
-        Map<String,Object> user = checkLogin(token);
-
-        // 文件检测
-        if (file == null) {
-            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("请选择图片"));
+        Map<String, Object> user = checkLogin(token);
+        // 验证图片是否存储
+        String md5Value = checkUpload(file);
+        PictureModel pictureModel = imageService.checkImageSaved(md5Value);
+        if (pictureModel != null) {
+            return CommonResponse.create(convertToVO(pictureModel));
         }
-        // 文件大小不大于5M，单位为字节单位：B
-        if (file.getSize() > max_image_size) {
-            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片大于5M"));
-        }
-        // 上传文件
-        String originalFilename = file.getOriginalFilename();
-        String suffixName = originalFilename.substring(originalFilename.lastIndexOf("."));
-        // 文件上传后路径
-        String fileName = UUID.randomUUID() + suffixName;
-        File dest = new File(this.image_dir + fileName);
-        try {
-            file.transferTo(dest);
-            InetAddress address = InetAddress.getLocalHost();
-            String htp_url = "http://" + address.getHostAddress() + "/image/"+fileName;
-            PictureModel pictureModel = new PictureModel();
-            pictureModel.setCategory(1);
-            pictureModel.setPath(this.image_dir+fileName);
-            pictureModel.setUrl(htp_url);
-            pictureModel.setKeywords("喵喵");
-            PictureModel resModel = imageService.saveImageInfo(pictureModel);
-            return CommonResponse.create(convertToVO(resModel));
-        } catch (IOException e) {
-            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片保存失败"));
-        }
+        // 存储图片
+        String fileName = executeUpload(file);
+        pictureModel = setPictureModel(fileName, md5Value, "", "");
+        return CommonResponse.create(convertToVO(pictureModel));
     }
 
-    @RequestMapping(value = "/uploads",params = {"token"})
+    @RequestMapping(value = "/uploads")
     @ResponseBody()
-    public CommonResponse uploadImages(MultipartFile files,String token,HttpServletRequest request) throws FinallyException {
-        System.out.println(token);
+    public CommonResponse uploadImages(MultipartFile[] files,String token, HttpServletRequest request) throws Exception {
         if (token == null || token.equals("")) {
             throw new FinallyException(EnumException.USER_NOT_LOGIN);
         }
-        Map<String,Object> user = checkLogin(token);
-//        if(files.length < 1){
-//            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片上传错误"));
-//        }
-        // 上传文件
-        String originalFilename = files.getOriginalFilename();
-        System.out.println("file name = "+originalFilename);
-        String suffixName = originalFilename.substring(originalFilename.lastIndexOf("."));
-        System.out.println("suffixName name = "+suffixName);
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            DigestInputStream digestInputStream = new DigestInputStream(files.getInputStream(), md5);
-            // read的过程中进行MD5处理，直到读完文件
-            byte[] buffer = new byte[256*1024];
-            while (digestInputStream.read(buffer) > 0){}
-            // 获取最终的MessageDigest
-            md5 = digestInputStream.getMessageDigest();
-            // 拿到结果，也是字节数组，包含16个元素
-            byte[] resultByteArray = md5.digest();
-            // 同样，把字节数组转换成字符串
-            String value = byteArrayToHex(resultByteArray);
-            System.out.println(value);
-            digestInputStream.close();
-            return CommonResponse.create(value);
-        } catch (Exception e) {
-//            e.printStackTrace();
-            throw new FinallyException(EnumException.DATA_ERROR.setErrMsg("error ="+e.getMessage()));
+        Map<String, Object> user = checkLogin(token);
+        List images = new ArrayList();
+        for (MultipartFile fl:files) {
+            // 验证图片是否存储
+            String md5Value = checkUpload(fl);
+            PictureModel pictureModel = imageService.checkImageSaved(md5Value);
+            if(pictureModel == null){
+                String fileName = executeUpload(fl);
+                pictureModel = setPictureModel(fileName, md5Value, "", "");
+            }
+            images.add(convertToVO(pictureModel));
         }
+        return CommonResponse.create(images);
     }
-    public static String byteArrayToHex(byte[] byteArray) {
+
+    // 保存图片信息到数据库
+    private PictureModel setPictureModel(String fileName, String md5Val, String path, String keywords) throws FinallyException {
+        PictureModel model = new PictureModel();
+        // 线上使用时，配置网站域名。
+//        InetAddress address = InetAddress.getLocalHost();
+//        String htp_url = "http://" + address.getHostAddress() + "/image/" + fileName;
+        String htp_url = "http://www.image.com/";
+        // 保存图片本地保存使用
+        if (path != null) {
+            htp_url += path;
+            model.setPath(this.image_dir + path + fileName);
+        } else {
+            model.setPath(this.image_dir + fileName);
+        }
+        // 保存外网访问连接
+        model.setUrl(htp_url + fileName);
+        // 保存md5值
+        model.setMd5(md5Val);
+        // 保存图片分类
+        model.setCategory(1);
+        // 保存图片关键字
+        model.setKeywords(keywords);
+        return imageService.saveImageInfo(model);
+    }
+
+
+    /**
+     * 提取上传方法为公共方法
+     *
+     * @param file 参数
+     * @return 返回结果
+     * @throws Exception 返回结果
+     */
+    private String checkUpload(MultipartFile file) throws FinallyException {
+        if (file == null) {
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("文件内容错误"));
+        }
+        // 获取md5值
+        MessageDigest messageDigest = null;
+        String md5Val = "";
+        try {
+            messageDigest = MessageDigest.getInstance("md5");
+            DigestInputStream digestInputStream = new DigestInputStream(file.getInputStream(), messageDigest);
+            byte[] bytes = new byte[256 * 1024];
+            while (digestInputStream.read(bytes) > 0) ;
+            messageDigest = digestInputStream.getMessageDigest();
+            byte[] resBytes = messageDigest.digest();
+            md5Val = byteArrayToHex(resBytes);
+            // 验证图片是否存在
+        } catch (NoSuchAlgorithmException | IOException e) {
+            e.printStackTrace();
+            System.out.println("上传图片错误，添加记录");
+        }
+        return md5Val;
+    }
+
+
+    private static String byteArrayToHex(byte[] byteArray) {
         // 首先初始化一个字符数组，用来存放每个16进制字符
-        char[] hexDigits = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
         // new一个字符数组，这个就是用来组成结果字符串的（解释一下：一个byte是八位二进制，也就是2位十六进制字符（2的8次方等于16的2次方））
-        char[] resultCharArray =new char[byteArray.length * 2];
+        char[] resultCharArray = new char[byteArray.length * 2];
         // 遍历字节数组，通过位运算（位运算效率高），转换成字符放到字符数组中去
         int index = 0;
         for (byte b : byteArray) {
-            resultCharArray[index++] = hexDigits[b>>> 4 & 0xf];
-            resultCharArray[index++] = hexDigits[b& 0xf];
+            resultCharArray[index++] = hexDigits[b >>> 4 & 0xf];
+            resultCharArray[index++] = hexDigits[b & 0xf];
         }
         // 字符数组组合成字符串返回
         return new String(resultCharArray);
     }
+
     /**
      * 检测登录状态
+     *
      * @param token token
      * @return 返回内容
      * @throws FinallyException 返回错误内容
      */
-    private Map<String,Object> checkLogin(String token) throws FinallyException {
+    private Map<String, Object> checkLogin(String token) throws FinallyException {
         if (token == null || token.equals("")) {
             throw new FinallyException(EnumException.USER_NOT_LOGIN);
         }
-        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
-        System.out.println("userId = "+user.get("userId"));
+        Map<String, Object> user = redisTemplate.opsForHash().entries(token);
         if (user == null) {
             throw new FinallyException(EnumException.USER_NOT_LOGIN.setErrMsg("请重新登录"));
         }
@@ -163,38 +190,62 @@ public class ImageAction extends BaseAction{
 
     /**
      * 提取上传方法为公共方法
+     *
      * @param file 参数
-     * @return 返回结果
+     * @return 返回图片的保存路径
      * @throws Exception 返回结果
      */
-    private String executeUpload(MultipartFile file)throws Exception{
-
-
-
+    private String executeUpload(MultipartFile file) throws FinallyException {
         //文件后缀名
         String suffix = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
+        // 验证文件是否是图片
+//        String check_suffix = suffix.substring(suffix.lastIndexOf("."));
+        checkImageMethodOne(suffix);
+        // 验证图片大小是否合理
+        if (file.getSize() > max_image_size) {
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片大于5M"));
+        }
         //上传文件名
-        String fileName = UUID.randomUUID()+suffix;
+        String fileName = UUID.randomUUID() + suffix;
         //服务端保存的文件对象
-        File serverFile = new File(image_dir + fileName);
+        File saveFile = new File(image_dir + fileName);
         // 检测是否存在目录
-        if (!serverFile.getParentFile().exists()) {
-            serverFile.getParentFile().mkdirs();
+        if (!saveFile.getParentFile().exists()) {
+            saveFile.getParentFile().mkdirs();
         }
         //将上传的文件写入到服务器端文件内
-        file.transferTo(serverFile);
+        try {
+            file.transferTo(saveFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("错误记录");
+        }
         return fileName;
     }
 
-
-
-
-
-
-
-
-
-
+    // 第一种方式，简单判断，通过图片后缀判断
+    private boolean checkImageMethodOne(String suffix) throws FinallyException {
+        if (suffix.equals("") || suffix == null) {
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片内容错误"));
+        }
+        // 验证图片后缀
+        if ("jpg".equals(suffix) || "png".equals(suffix) || "JPG".equals(suffix)) {
+            return true;
+        }
+        // 判断是否在匹配格式范围
+        if (image_regex.indexOf(suffix) < 0) {
+            throw new FinallyException(EnumException.PARAMS_ERROR.setErrMsg("图片格式错误"));
+        }
+        return true;
+    }
+    // 第二种判断方式，通过文件头，
+//    private String checkImageMethodTwo(){
+//        return "";
+//    }
+    // 第三种判断方式，获取图片宽高判断
+//    private String checkImageMethodThree(){
+//        return "";
+//    }
 
 
     /**
@@ -212,8 +263,6 @@ public class ImageAction extends BaseAction{
 //        Map<String,Object> user = redisTemplate.opsForHash().entries(token);
 //
 //    }
-
-
 
 
 //    implements ApplicationListener<WebServerInitializedEvent>
@@ -376,14 +425,12 @@ public class ImageAction extends BaseAction{
 //    public void onApplicationEvent(WebServerInitializedEvent webServerInitializedEvent) {
 //        this.serverPort = webServerInitializedEvent.getWebServer().getPort();
 //    }
-
-
-    public ImageVO convertToVO(PictureModel pictureModel){
-        if(pictureModel == null){
+    public ImageVO convertToVO(PictureModel pictureModel) {
+        if (pictureModel == null) {
             return null;
         }
         ImageVO imageVO = new ImageVO();
-        BeanUtils.copyProperties(pictureModel,imageVO);
+        BeanUtils.copyProperties(pictureModel, imageVO);
         return imageVO;
     }
 
