@@ -17,13 +17,15 @@ public class CollectionNotSafeDemo {
     }
 
     /**
-     *
+     * CopyOnWriteArrayList验证方法
      */
     public void method(){
         List<String> list = new CopyOnWriteArrayList<>();
-        for(int i =0;i< 3;i++){
+        for(int i =0;i< 9;i++){
             new Thread(()->{
-                list.add(UUID.randomUUID().toString().substring(0,8));
+                String str = UUID.randomUUID().toString().substring(0,8);
+                System.out.println(str);
+                list.add(str);
                 System.out.println(list);
             },String.valueOf(i)).start();
         }
