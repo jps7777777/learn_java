@@ -1,4 +1,4 @@
-package other.base.oop;
+package oop;
 
 public class User {
 
