@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <h1>talk page</h1>
+
+    <table>
+        <tr>
+            <td>
+                <label>聊天信息:</label><textarea v-model="message_area" cols="50" rows="30"></textarea></br>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label >用 户 名:</label><input type="text" v-model="user_name" ></br>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <input type="button" @click="test" value="test" />
+                <input type="button" @click="join_room_btn" value="进入聊天室" />
+                <input type="button" @click="leave_room_btn" value="离开聊天室" /></br>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <label >输入消息:</label><textarea id="send_message" cols="50" rows="3"></textarea></br>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <input type="button" @click="send_btn" value="发送消息" />
+            </td>
+        </tr>
+    </table>
+
+
+
+</div>
+</body>
+<script>
+
+
+
+
+
+
+
+
+    new Vue({
+        el: '#app',
+        data : {
+                webSocket: null,
+                url:'ws://localhost:8082/',
+                send_message:"",
+                user_name:"test",
+                message_area:"",
+        },
+        methods: {
+            test :function () {
+                // console.log(this.url + this.user_name)
+                // this.message_area.append(this.user_name + '\n')
+                // this.message_area.concat(this.user_name + '\n')
+                this.message_area = this.message_area+"\n"+this.user_name
+                // $("#message_area").val(this.user_name + '\n')
+                // this.user_name.concat()
+            },
+            //进入聊天室
+            join_room_btn :function(){
+                this.webSocket = new WebSocket(this.url + this.user_name);
+                console.log(this.url + this.user_name)
+                this.webSocket.onopen = function() {
+                    console.log('webSocket连接创建。。。');
+                }
+                this.webSocket.onclose = function() {
+                    this.message_area.append('[' + this.user_name + ']离开了聊天室\n');
+                }
+                this.webSocket.onmessage = function(event) {
+                    var tmp = this.message_area + "\n" + event.data
+                    console.log(tmp)
+                    this.message_area = tmp
+                    // this.message_area.append(event.data + '\n');
+                }
+                this.webSocket.onerror = function(event) {
+                    console.log('webSocket连接异常。。。');
+                }
+            },
+            //退出聊天室
+            leave_room_btn :function (){
+                if (this.webSocket) {
+                    //关闭连接
+                    this.webSocket.close();
+                }
+            },
+            //发送消息
+            send_btn  :function() {
+                var msg = $('#send_message').val();
+                this.webSocket.send(msg);
+                $('#send_message').val('');
+            }
+        }
+
+    })
+</script>
+</html>

@@ -11,10 +11,14 @@ public class User {
     private String name;//用户姓名
     private String sex;//用户性别
     private Socket sock;//用户自己的socket
+    private int id;
+//    private String units;
+
     public User(String name,String sex,Socket sock)
     {
         setName(name);
         setSex(sex);
         setSock(sock);
+        setId(sock.getPort());
     }
 }
