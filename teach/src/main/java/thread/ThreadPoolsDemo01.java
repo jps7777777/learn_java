@@ -130,7 +130,7 @@ public class ThreadPoolsDemo01 {
      */
     public void methodTwo(){
         ExecutorService executorService = Executors.newFixedThreadPool(7);
-        AtomicInteger atomic = new AtomicInteger(0);
+        final AtomicInteger atomic = new AtomicInteger(0);
         for (int i = 0; i < 20; i++) {
             executorService.execute(new Runnable() {
                 @Override

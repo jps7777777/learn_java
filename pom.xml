@@ -11,6 +11,7 @@
     <modules>
       <module>image</module>
       <module>teach</module>
+        <module>talk</module>
     </modules>
 
     <name>learn</name>
