@@ -62,7 +62,6 @@ class UserInfo implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public void sendMsg(String msg, int port, int roomId) {
