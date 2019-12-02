@@ -22,7 +22,7 @@ public class Server {
     public User uu;
 
     public Server(String user) {
-        this.user = user;
+        Server.user = user;
     }
 
     public void getServer() {

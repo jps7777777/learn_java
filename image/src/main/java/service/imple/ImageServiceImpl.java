@@ -1,4 +1,4 @@
-package image.service.imple;
+package service.imple;
 
 import image.bean.PictureDO;
 import image.dao.PictureDOMapper;

@@ -12,6 +12,7 @@
       <module>image</module>
       <module>teach</module>
         <module>talk</module>
+        <module>common</module>
     </modules>
 
     <name>learn</name>
@@ -46,18 +47,54 @@
         </exclusion>
       </exclusions>
     </dependency>
-
+    <!-- 日志使用 -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-log4j</artifactId>
       <version>1.3.8.RELEASE</version>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.25</version>
+    </dependency>
 
     <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>1.16.20</version>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.11</version>
     </dependency>
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>druid</artifactId>
+      <version>1.1.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>fastjson</artifactId>
+      <version>1.2.54</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+      <version>2.1.3.RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+      <version>2.0.5.RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-redis</artifactId>
+      <version>2.0.10.RELEASE</version>
+    </dependency>
+
+    <!--<dependency>-->
+      <!--<groupId>org.projectlombok</groupId>-->
+      <!--<artifactId>lombok</artifactId>-->
+      <!--<version>1.16.20</version>-->
+    <!--</dependency>-->
     <!--swagger2依赖-->
     <dependency>
       <groupId>io.springfox</groupId>

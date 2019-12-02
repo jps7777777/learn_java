@@ -21,7 +21,7 @@ public enum EnumException implements CommonException{
     private int errCode;
     private String errMsg;
 
-    private EnumException(int errCode,String errMsg){
+    EnumException(int errCode, String errMsg){
         this.errCode = errCode;
         this.errMsg = errMsg;
     }

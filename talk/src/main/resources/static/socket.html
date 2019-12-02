@@ -78,19 +78,19 @@
             //进入聊天室
             join_room_btn :function(){
                 this.webSocket = new WebSocket(this.url + this.user_name);
-                console.log(this.url + this.user_name)
+                console.log(this.url + this.user_name);
                 this.webSocket.onopen = function() {
                     console.log('webSocket连接创建。。。');
-                }
+                };
                 this.webSocket.onclose = function() {
                     this.message_area.append('[' + this.user_name + ']离开了聊天室\n');
-                }
+                };
                 this.webSocket.onmessage = function(event) {
-                    var tmp = this.message_area + "\n" + event.data
-                    console.log(tmp)
+                    var tmp = this.message_area + "\n" + event.data;
+                    console.log(tmp);
                     this.message_area = tmp
                     // this.message_area.append(event.data + '\n');
-                }
+                };
                 this.webSocket.onerror = function(event) {
                     console.log('webSocket连接异常。。。');
                 }

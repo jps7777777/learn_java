@@ -100,7 +100,7 @@ public class G_Menu extends JFrame implements ActionListener {
         try {
             String user = na + "(" + se + ")";//将用户信息保存成字符串形式
             soc = new Socket_one(user);//创建客户端对象
-            pw = new PrintWriter(soc.socket.getOutputStream());//创建输出流
+            pw = new PrintWriter(Socket_one.socket.getOutputStream());//创建输出流
             pw.println("1008611");//发送好友列表标识
             pw.println(na + ":" + se);//发送用户信息
             pw.flush();
@@ -116,7 +116,7 @@ public class G_Menu extends JFrame implements ActionListener {
         jf.addWindowListener(new WindowAdapter() {
                                  public void windowClosing(WindowEvent e) {
                                      try {
-                                         pw = new PrintWriter(soc.socket.getOutputStream());
+                                         pw = new PrintWriter(Socket_one.socket.getOutputStream());
                                          pw.println("456987");//发送下线标识
                                          pw.println(na + ":离开聊天室");//发送下线信息
                                          pw.flush();
@@ -133,7 +133,7 @@ public class G_Menu extends JFrame implements ActionListener {
         jb1.setText("发送>>");
         jb2.setText("刷新");
         try {
-            pw = new PrintWriter(soc.socket.getOutputStream());
+            pw = new PrintWriter(Socket_one.socket.getOutputStream());
             if (event.getActionCommand().equals("发送>>"))//点击发送触发
             {
                 if (!jtf.getText().equals("")) {
@@ -151,7 +151,7 @@ public class G_Menu extends JFrame implements ActionListener {
                 }
             } else if (event.getActionCommand().equals("刷新"))//点击刷新触发
             {
-                pw = new PrintWriter(soc.socket.getOutputStream());
+                pw = new PrintWriter(Socket_one.socket.getOutputStream());
                 pw.println("123654");//发送刷新标识
                 pw.flush();
             }

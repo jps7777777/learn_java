@@ -53,13 +53,13 @@
             webSocket = new WebSocket(url + username);
             webSocket.onopen = function () {
                 console.log('webSocket连接创建。。。');
-            }
+            };
             webSocket.onclose = function () {
                 $('#messageArea').append('[' + username + ']离开了聊天室\n');
-            }
+            };
             webSocket.onmessage = function (event) {
                 $('#messageArea').append(event.data + '\n');
-            }
+            };
             webSocket.onerror = function (event) {
                 console.log('webSocket连接异常。。。');
             }
