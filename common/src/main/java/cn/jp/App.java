@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Api(value = "通用接口",tags = "系统通用接口")
 public class App {
 
-//    private static Logger log = LoggerFactory.getLogger(App.class);
     private static Logger log = Logger.getLogger(App.class);
 
     /**
@@ -30,6 +29,7 @@ public class App {
     @ApiOperation(value = "通用地址接口", notes = "通用接口地址，设置为微程序架构模式使用。")
     @ResponseBody
     public CommonResponse index() {
+
         return CommonResponse.create("hello common.");
     }
 

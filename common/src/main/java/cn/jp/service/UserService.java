@@ -8,6 +8,6 @@ public interface UserService {
 
     void saveUser(UserModel userModel) throws FinallyException;
     void login(UserModel userModel) throws FinallyException;
-
+    UserModel getUserInfoByToken(String token) throws FinallyException;
 
 }

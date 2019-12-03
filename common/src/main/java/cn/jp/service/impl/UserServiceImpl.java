@@ -9,13 +9,12 @@ import cn.jp.exception.FinallyException;
 import cn.jp.service.UserService;
 import cn.jp.service.model.UserModel;
 import cn.jp.utils.CommonUtils;
+import com.alibaba.druid.util.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -50,23 +49,23 @@ public class UserServiceImpl implements UserService {
         }
         // TODO 保存用户信息到Redis中
         // 查询用户密码
-        redisTemplate.opsForHash().put("user_id_"+resDO.getId(),"id",resDO.getId());
-        redisTemplate.opsForHash().put("user_id_"+resDO.getId(),"id",resDO.getId());
+//        redisTemplate.opsForHash().put("user_id_"+resDO.getId(),"id",resDO.getId());
+//        redisTemplate.opsForHash().put("user_id_"+resDO.getId(),"id",resDO.getId());
+
 
     }
 
-
-    private UserDO convertToDo(UserModel origin) throws FinallyException {
-        if(origin == null){
-            throw new FinallyException(EnumException.PARAMS_IS_EMPTY.setErrMsg("对象转换是传参不能为空：" +
-                    "CommonUtils.convertTo(Object origin,Object target)"));
+    @Override
+    public UserModel getUserInfoByToken(String token) throws FinallyException {
+        if(StringUtils.isEmpty(token)){
+            throw new FinallyException(EnumException.PARAMS_IS_EMPTY);
         }
-        UserDO userDO = new UserDO();
-        BeanUtils.copyProperties(origin,userDO);
-        return userDO;
+        UserDO userDO = userDOMapper.getUserInfoByToken(token,0);
+        if(userDO == null){
+            throw new FinallyException(EnumException.DATA_EMPTY);
+        }
+        return (UserModel) CommonUtils.convertTo(userDO,new UserModel());
     }
-
-
 
 
 }

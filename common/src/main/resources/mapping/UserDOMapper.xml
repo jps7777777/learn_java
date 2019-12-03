@@ -33,6 +33,14 @@
     where id = #{id,jdbcType=INTEGER}
   </select>
 
+  <select id="getUserInfoByToken" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from user
+    where id=(select user_id from user_more where
+    token=#{token,jdbcType=VARCHAR} and sc_type=#{type,jdbcType=INTEGER})
+  </select>
+
   <select id="selectByUserDO" parameterType="cn.jp.bean.UserDO" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
