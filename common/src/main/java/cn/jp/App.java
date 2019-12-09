@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Api(value = "通用接口",tags = "系统通用接口")
 public class App {
 
-    private static Logger log = Logger.getLogger(App.class);
+    public static Logger log = Logger.getLogger(App.class);
 
     /**
      * @return
