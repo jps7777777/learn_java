@@ -90,7 +90,12 @@
       <artifactId>spring-data-redis</artifactId>
       <version>2.0.10.RELEASE</version>
     </dependency>
-
+    <!--poi-excel-->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>3.9</version>
+    </dependency>
     <!--<dependency>-->
       <!--<groupId>org.projectlombok</groupId>-->
       <!--<artifactId>lombok</artifactId>-->

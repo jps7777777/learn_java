@@ -40,6 +40,16 @@
     where id=(select user_id from user_more where
     token=#{token,jdbcType=VARCHAR} and sc_type=#{type,jdbcType=INTEGER})
   </select>
+  <!--<select id="getUserInfoByMobile" parameterType="cn.jp.bean.UserDO" resultMap="BaseResultMap">-->
+    <!--select-->
+    <!--<include refid="Base_Column_List" />-->
+    <!--from user-->
+    <!--where-->
+    <!--<if test="id != null">-->
+      <!--id=#{id,jdbcType=INTEGER} and-->
+    <!--</if>-->
+    <!--email like CONCAT('%',#{uId,jdbcType=VARCHAR},'%')-->
+  <!--</select>-->
 
   <select id="selectByUserDO" parameterType="cn.jp.bean.UserDO" resultMap="BaseResultMap">
     select

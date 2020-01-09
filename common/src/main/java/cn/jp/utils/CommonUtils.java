@@ -61,5 +61,17 @@ public class CommonUtils {
         return ip;
     }
 
+    public static boolean isPhoneNum(String num){
+        if(num.length() != 11){
+           return false;
+        }
+        if(num.indexOf(0) != 1){
+            return false;
+        }
+        return true;
+    }
+
+
+
 
 }

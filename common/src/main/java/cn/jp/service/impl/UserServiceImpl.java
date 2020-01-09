@@ -10,7 +10,6 @@ import cn.jp.service.UserService;
 import cn.jp.service.model.UserModel;
 import cn.jp.utils.CommonUtils;
 import com.alibaba.druid.util.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,6 @@ public class UserServiceImpl implements UserService {
         if(userDO.getId() < 0){
             throw new FinallyException(EnumException.DATA_INSERT_ERROR);
         }
-        System.out.println(userDO.getId());
         UserPasswordDO passwordDO = (UserPasswordDO) CommonUtils.convertTo(userModel.getPasswordModel(),new UserPasswordDO());
         passwordDO.setUserId(userDO.getId());
         userPasswordDOMapper.insertSelective(passwordDO);
@@ -65,6 +63,11 @@ public class UserServiceImpl implements UserService {
             throw new FinallyException(EnumException.DATA_EMPTY);
         }
         return (UserModel) CommonUtils.convertTo(userDO,new UserModel());
+    }
+
+    @Override
+    public void updatePwd(UserModel userModel) throws FinallyException {
+
     }
 
 

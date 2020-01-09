@@ -29,7 +29,6 @@ public class App {
     @ApiOperation(value = "通用地址接口", notes = "通用接口地址，设置为微程序架构模式使用。")
     @ResponseBody
     public CommonResponse index() {
-
         return CommonResponse.create("hello common.");
     }
 
@@ -37,4 +36,5 @@ public class App {
         log.info("项目启动...");
         SpringApplication.run(App.class,args);
     }
+
 }
