@@ -118,6 +118,16 @@
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
+        <!-- 修改springboot的编译插件为maven编译插件 -->
+        <!--<plugin>-->
+          <!--<groupId>org.apache.maven.plugins</groupId>-->
+          <!--<artifactId>maven-compiler-plugin</artifactId>-->
+          <!--<version>3.1</version>-->
+          <!--<configuration>-->
+            <!--<source>${java.version}</source>-->
+            <!--<target>${java.version}</target>-->
+          <!--</configuration>-->
+        <!--</plugin>-->
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
